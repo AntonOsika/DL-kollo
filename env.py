@@ -24,8 +24,10 @@ class Student:
     
     """
 
+
     def __init__(self, num_skills=100):
         self.max_time = 24*30
+        self.num_skills = num_skills
 
         self.half_life = 10*np.ones(num_skills) # random decay rates, units of 2.4h 
         self.ps = np.zeros(num_skills) # initial skill skill levels
@@ -33,20 +35,19 @@ class Student:
         self.time = 0
 
         # The following is how different students are "different", i.e. have an easier time learing some skills
-        _initial_exercises()
+        self._initial_exercises()
         self._pass_time(7*24) # pass one week
 
     def _initial_exercises(self, N=300):
         for i in range( N ):
-            self._do_exercise(np.random.randint(self.ps.size))[0][0]
+            self._do_exercise(np.random.randint(self.ps.size))
             self.time = 0
-
 
     def _pass_time(self, t):
 
         # time has passed so decay probability:
         # time is measured in hours (could fix this later)
-        self.ps *= np.power( 2, -t/2.4/self.half_life ) # Decay probability of recalling memory
+        self.ps *= np.power( 2, -t/2.4/self.half_life ) # Decay probability of recall
 
     def _do_exercise(self, exercise):
         
@@ -89,10 +90,32 @@ class Student:
 
     def do_exercise(self, exercise):
 
-        res = self._do_exercise(exercise)
+        if self.time >= self.max_time:
+            done = True
+            return (0, 0), 0, done
 
-        return res
+        rv = self._do_exercise(exercise)
+
+        return rv
 
     def reset(self):
         self.__init__()
 
+
+def test():
+    s = Student()
+
+    done = False
+
+    while not done:
+        a = np.random.randint(0, s.num_skills)
+        obs, reward, done = s.do_exercise(a)
+
+    s.reset(s.num_skills)
+    print "Done"
+
+
+
+
+if __name__ == '__main__':
+    test()
