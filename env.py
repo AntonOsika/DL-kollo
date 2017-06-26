@@ -25,12 +25,20 @@ class Student:
     """
 
 
-    def __init__(self, num_skills=100):
+    def __init__(self, num_skills=30, random_seed=42):
         self.max_time = 24*30
         self.num_skills = num_skills
 
-        self.half_life = 10*np.ones(num_skills) # random decay rates, units of 2.4h 
-        self.ps = np.zeros(num_skills) # initial skill skill levels
+        np.random.seed(random_seed)
+        self.random_state = np.random.get_state() # To make each student deterministic
+
+        self._reset()
+
+    def _reset(self):
+        np.random.set_state(self.random_state)
+
+        self.half_life = 10*np.ones(self.num_skills) # random decay rates, units of 2.4h
+        self.ps = np.zeros(self.num_skills) # initial skill skill levels
         self.learn_rate = 1 + np.random.rand(1)  # random learning rate for long term memory
         self.time = 0
 
@@ -38,7 +46,10 @@ class Student:
         self._initial_exercises()
         self._pass_time(7*24) # pass one week
 
-    def _initial_exercises(self, N=300):
+        self.random_state = np.random.get_state()
+
+
+    def _initial_exercises(self, N=150):
         for i in range( N ):
             self._do_exercise(np.random.randint(self.ps.size))
             self.time = 0
@@ -50,7 +61,8 @@ class Student:
         self.ps *= np.power( 2, -t/2.4/self.half_life ) # Decay probability of recall
 
     def _do_exercise(self, exercise):
-        
+        np.random.set_state(self.random_state)
+
         correct_prob = self.ps[exercise]
 
         # reset the skill we just practiced:
@@ -74,6 +86,8 @@ class Student:
             reward = self._eval()
 
         correct = np.random.rand() < correct_prob
+
+        self.random_state = np.random.get_state()
 
         return (correct, time_till_next), reward, done
 
@@ -99,7 +113,10 @@ class Student:
         return rv
 
     def reset(self):
-        self.__init__()
+        self._reset()
+
+
+
 
 
 def test():
@@ -111,8 +128,7 @@ def test():
         a = np.random.randint(0, s.num_skills)
         obs, reward, done = s.do_exercise(a)
 
-    s.reset(s.num_skills)
-    print "Done"
+    s.reset()
 
 
 
