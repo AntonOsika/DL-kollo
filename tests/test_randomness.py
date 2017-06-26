@@ -1,4 +1,5 @@
-import env
+from kollo import env
+Student = env.Student
 
 s1 = env.Student()
 s2 = env.Student()

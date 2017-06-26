@@ -1,6 +1,6 @@
 import numpy as np
 
-class Student:
+class Student(object):
 
 
     """
@@ -26,7 +26,7 @@ class Student:
 
 
     def __init__(self, num_skills=30, random_seed=42):
-        self.max_time = 24*30
+        self.max_time = 24*14
         self.num_skills = num_skills
 
         np.random.seed(random_seed)
@@ -44,12 +44,12 @@ class Student:
 
         # The following is how different students are "different", i.e. have an easier time learing some skills
         self._initial_exercises()
-        self._pass_time(30*24) # pass one week
+        self._pass_time(24*28)
 
         self.random_state = np.random.get_state()
 
 
-    def _initial_exercises(self, N=150):
+    def _initial_exercises(self, N=100):
         for i in range( N ):
             self._do_exercise(np.random.randint(self.ps.size))
             self.time = 0
@@ -94,7 +94,7 @@ class Student:
     def _eval(self):
         tmp_ps = self.ps.copy()
 
-        self._pass_time(24*7)
+        self._pass_time(24*14)
         reward = self.ps.sum()
 
         self.ps = tmp_ps
