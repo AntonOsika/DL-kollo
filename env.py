@@ -44,7 +44,7 @@ class Student:
 
         # The following is how different students are "different", i.e. have an easier time learing some skills
         self._initial_exercises()
-        self._pass_time(7*24) # pass one week
+        self._pass_time(30*24) # pass one week
 
         self.random_state = np.random.get_state()
 
