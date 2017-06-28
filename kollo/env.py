@@ -12,10 +12,10 @@ class Student(object):
 
     For each action of do_exercise(exercise) an (observation, reward, done) tuple is returned, where the observation is: (correct/incorrect bool, time_till_next_exercise)
 
-    Each student will do exercises for 30 days, then rests for 7 days and then perform a final test over each "skill".
+    Each student will do exercises for 2 weeks, then rests for 2 weeks and then perform a final test over each "skill".
     The environment then needs to be .reset().
 
-    The reward for each action is 0, except when 30 days has passed where the reward == the test score over all skills.
+    The reward for each action is 0, except when 2 weeks has passed where the reward == the test score over all skills.
 
 
     The key to achieve good learning in the simulator is to repeat the exercises and take advantage of the "free lunch" in education: space repetition (to
@@ -28,6 +28,8 @@ class Student(object):
     def __init__(self, num_skills=30, random_seed=42):
         self.max_time = 24*14
         self.num_skills = num_skills
+        self.action_space = num_skills
+        self.observation_space = (bool, int)
 
         np.random.seed(random_seed)
         self.random_state = np.random.get_state() # To make each student deterministic
@@ -95,7 +97,7 @@ class Student(object):
         tmp_ps = self.ps.copy()
 
         self._pass_time(24*14)
-        reward = self.ps.sum()
+        reward = self.ps.mean()
 
         self.ps = tmp_ps
 
@@ -111,6 +113,11 @@ class Student(object):
         rv = self._do_exercise(exercise)
 
         return rv
+
+
+    def step(self, action):
+        return self.do_exercise(action) + ({},)
+
 
     def reset(self):
         self._reset()
