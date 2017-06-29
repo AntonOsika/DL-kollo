@@ -24,7 +24,7 @@ for _ in range(100):
 
     counter = 0
     done = False
-    while no t done:
+    while not done:
         obs, reward2, done = s2.do_exercise(counter % s2.action_space)
 
     # print "Final:"

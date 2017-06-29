@@ -2,6 +2,33 @@
 
 This environment simulates learning from exercises. It has the same interface as an OpenAI gym.
 
+
+## Usage and installation
+
+Clone and run setup:
+
+    git clone https://github.com/AntonOsika/DL-kollo.git
+    cd DL-kollo
+    pip install . --user
+
+
+Import environment in python:
+
+    import kollo
+    student = kollo.env.Student()
+
+Example usage:
+
+    student.step(0)         # do exercise 0
+
+    random_action = np.random.randint(0, student.action_space)
+    obs, reward, done, info = student.step(random_action)
+
+    student.reset()         # get next student
+
+## Description
+
+
 Each student has different strengths and weaknesses, and learns with a different rate.
 
 Students are processed one at a time, and a new student is retrieved with .reset().
@@ -16,5 +43,3 @@ The reward for each action is 0, except when 2 weeks has passed where the reward
 
 The key to achieve good learning in the simulator is to space repetition to
 move memories to long term memory.
-
-
