@@ -88,7 +88,8 @@ class Student(object):
         if done:
             reward = self._eval()
 
-        correct = np.random.rand() < correct_prob
+        randv = np.random.rand()
+        correct = randv < correct_prob
 
         self.random_state = np.random.get_state()
 
