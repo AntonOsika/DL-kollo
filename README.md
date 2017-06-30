@@ -43,3 +43,5 @@ The reward for each action is 0, except when 2 weeks has passed where the reward
 
 The key to achieve good learning in the simulator is to space repetition to
 move memories to long term memory.
+
+Be aware that the first student uses random seed 42 by default when evaluating the model on test-data.
