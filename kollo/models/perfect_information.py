@@ -24,7 +24,7 @@ for j in range(100):
 
     s.reset()
 
-print "{} +- {}".format(np.mean(rewards[i]), np.std(rewards[i]))
+print("{} +- {}".format(np.mean(rewards[i]), np.std(rewards[i])))
 
 
 s = Student()
@@ -47,7 +47,7 @@ for j in range(100):
 
     s.reset()
 
-print "{} +- {}".format(np.mean(rewards[i]), np.std(rewards[i]))
+print("{} +- {}".format(np.mean(rewards[i]), np.std(rewards[i])))
 
 
 s = Student()
@@ -82,7 +82,7 @@ for j in range(100):
 
     s.reset()
 
-print "{} +- {}".format(np.mean(rewards[i]), np.std(rewards[i]))
+print("{} +- {}".format(np.mean(rewards[i]), np.std(rewards[i])))
 
 
 s = Student()
