@@ -12,7 +12,8 @@ double_half_life = 3.0
 initial1 = 115
 initial2 = 35
 time_delta = 4.8
-for i, time_delta in enumerate(np.linspace(4, 5.5, 20)):
+# for i, time_delta in enumerate(np.linspace(4, 5.5, 20)):
+for i in [0]:
     s = Student()
 
     for j in range(100):
