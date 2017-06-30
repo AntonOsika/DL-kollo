@@ -12,13 +12,15 @@ double_half_life = 3.0
 initial1 = 115
 initial2 = 35
 time_delta = 4.8
+
+# Loop for finding parameters:
 # for i, time_delta in enumerate(np.linspace(4, 5.5, 20)):
 for i in [0]:
     s = Student()
 
     for j in range(100):
 
-        heap = [] # stores [ time, action, half_life, var]
+        heap = [] # stores [ time, action, half_life, var ]
         next_exercise = 0
 
         #print "Starting: {}".format(s._eval())
@@ -60,4 +62,4 @@ for i in [0]:
 
         s.reset()
 
-    print "{}: {} +- {}".format(time_delta, np.mean(rewards[i]), np.std(rewards[i] - rewards[0]))
+    print("{}: {} +- {}".format(time_delta, np.mean(rewards[i]), np.std(rewards[i])) )

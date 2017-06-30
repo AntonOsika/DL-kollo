@@ -80,7 +80,7 @@ class Student(object):
         self.time += time_till_next
 
         self._pass_time(time_till_next)
-        
+
         done = self.time >= self.max_time
 
         reward = 0.0
@@ -91,7 +91,8 @@ class Student(object):
         randv = np.random.rand()
         correct = randv < correct_prob
 
-        self.random_state = np.random.get_state()
+        self.state = np.random.get_state()
+        self.random_state = self.state
 
         return (correct, time_till_next), reward, done
 

@@ -36,5 +36,5 @@ for _ in range(100):
     rewards2.append(reward2)
 
 
-print "{} +- {}".format(np.mean(rewards), np.std(np.array(rewards) - np.array(rewards2)))
-print "{} +- {}".format(np.mean(rewards2), np.std(np.array(rewards) - np.array(rewards2)))
+print("{} +- {}".format(np.mean(rewards), np.std(np.array(rewards) - np.array(rewards2))))
+print("{} +- {}".format(np.mean(rewards2), np.std(np.array(rewards) - np.array(rewards2))))
