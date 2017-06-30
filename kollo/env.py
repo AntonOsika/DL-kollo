@@ -127,6 +127,36 @@ class Student(object):
 
 
 
+class StudentEnv(Student):
+
+    def __init__(self):
+        super(StudentEnv, self).__init__()
+
+        self.history = np.zeros([10*(self.max_time), self.action_space, 3])
+        self.history_length = 1
+        self.observation_space = [None, self.action_space, 3]
+
+    def step(self, action):
+        (correct, passed_time), reward, done, info = super(StudentEnv, self).step(action)
+        self.history[self.history_length, action, 0] = 1
+        self.history[self.history_length, action, 1] = correct
+        self.history_length += 1
+
+        if passed_time:
+            self.history[self.history_length, :, 2] = passed_time
+            self.history_length += 1
+
+        return self.history[:self.history_length], reward, done, info
+
+    def reset(self):
+        super(StudentEnv, self).reset()
+
+        self.history[:self.history_length] = 0.0
+
+        self.history_length = 1
+
+        return self.history[:self.history_length]
+
 
 
 def test():

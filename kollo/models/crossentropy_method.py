@@ -8,47 +8,10 @@ from rl.memory import EpisodeParameterMemory
 from kollo import env
 
 
-N_FEATURES = 3
-
-class StudentEnv(env.Student):
-
-    def __init__(self):
-        super(StudentEnv, self).__init__()
-
-        self.history = np.zeros([10*(self.max_time), self.action_space, N_FEATURES])
-        # self.history = [np.zeros([10*(self.max_time), N_FEATURES]) for _ in range(self.action_space)]
-        self.history_length = 1
-
-    def step(self, action):
-        (correct, passed_time), reward, done, info = super(StudentEnv, self).step(action)
-        self.history[self.history_length, action, 0] = 1
-        self.history[self.history_length, action, 1] = correct
-        # self.history[action][self.history_length, 0] = 1
-        # self.history[action][self.history_length, 1] = correct
-        self.history_length += 1
-        if passed_time:
-            self.history[self.history_length, :, 2] = passed_time
-            # self.history[action][self.history_length, 2] = passed_time
-            self.history_length += 1
-
-        return self.history[:self.history_length], reward, done, info
-        # return [x[:self.history_length] for x in self.history], reward, done, info
-
-    def reset(self):
-        super(StudentEnv, self).reset()
-
-        self.history[:self.history_length] = 0.0
-        # for x in self.history:
-        #     x[:self.history_length] = 0.0
-
-        self.history_length = 1
-
-        return self.history[:self.history_length]
-        # return [x[:self.history_length] for x in self.history]
 
 
 
-se = StudentEnv()
+se = env.StudentEnv()
 
 
 def model_fn():
@@ -56,12 +19,12 @@ def model_fn():
     shared_dense = keras.layers.Dense(1)
 
     # inputs = [keras.layers.Input([None, N_FEATURES], name='input{}'.format(i)) for i in xrange(se.action_space)]
-    inp = keras.layers.Input([None, se.action_space, N_FEATURES])
+    inp = keras.layers.Input([1, None, se.action_space, N_FEATURES])
 
-    inputs = [ keras.layers.Lambda(lambda x: x[:, i, :])(inp) for i in range(se.action_space) ]
+    # take out the first (from multiple states) and each action ()
+    inputs = [ keras.layers.Lambda(lambda x: x[:, 0, :, i, :])(inp) for i in range(se.action_space) ]
 
-    lstm_out = [shared_lstm(inp) for inp in inputs]
-    # lstm_out = [shared_lstm(x) for x in inputs]
+    lstm_out = [shared_lstm(x) for x in inputs]
     dense_out = [shared_dense(x) for x in lstm_out]
 
     out = keras.layers.Concatenate()(dense_out)
