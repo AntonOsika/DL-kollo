@@ -1,9 +1,9 @@
-from kollo import env
+from kollo import simulators
 import  numpy as np
 import heapq
 
 
-Student = env.Student
+Student = simulators.Student
 
 rewards = np.zeros((20, 100))
 

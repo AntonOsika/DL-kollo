@@ -5,29 +5,30 @@ import keras
 from rl.agents.cem import CEMAgent
 from rl.memory import EpisodeParameterMemory
 
-from kollo import env
+from kollo import simulators
 
 
+np.set_printoptions(precision=2, suppress=True)
 
 
-
-se = env.StudentEnv()
+se = simulators.StudentEnv()
 
 
 def model_fn():
-    shared_lstm = keras.layers.LSTM(64)
-    shared_dense = keras.layers.Dense(1)
+    shared_lstm = keras.layers.LSTM(4)
+    shared_dense1 = keras.layers.Dense(4, activation='relu')
+    shared_dense2 = keras.layers.Dense(1)
 
-    # inputs = [keras.layers.Input([None, N_FEATURES], name='input{}'.format(i)) for i in xrange(se.action_space)]
-    inp = keras.layers.Input([1, None, se.action_space, N_FEATURES])
+    inp = keras.layers.Input([1, None, se.action_space, 3])
 
     # take out the first (from multiple states) and each action ()
     inputs = [ keras.layers.Lambda(lambda x: x[:, 0, :, i, :])(inp) for i in range(se.action_space) ]
 
     lstm_out = [shared_lstm(x) for x in inputs]
-    dense_out = [shared_dense(x) for x in lstm_out]
+    dense_out1 = [shared_dense1(x) for x in lstm_out]
+    dense_out2 = [shared_dense2(x) for x in dense_out1]
 
-    out = keras.layers.Concatenate()(dense_out)
+    out = keras.layers.Concatenate()(dense_out2)
 
     return keras.models.Model(inp, out)
 
@@ -48,10 +49,10 @@ cem.compile()
 # Okay, now it's time to learn something! We visualize the training here for show, but this
 # slows down training quite a lot. You can always safely abort the training prematurely using
 # Ctrl + C.
-cem.fit(se, nb_steps=100, visualize=False, verbose=2)
+history = cem.fit(se, nb_steps=100000, visualize=False, verbose=2)
 
 # After training is done, we save the best weights.
-cem.save_weights('cem_{}_params.h5f'.format('Student1'), overwrite=True)
+cem.save_weights('cem_{}_params.h5f'.format('Student2'), overwrite=True)
 
 # Finally, evaluate our algorithm for 5 episodes.
-cem.test(env, nb_episodes=5, visualize=True)
+cem.test(se, nb_episodes=5, visualize=False)

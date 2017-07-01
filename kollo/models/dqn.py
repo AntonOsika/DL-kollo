@@ -19,9 +19,9 @@ from baselines.common.schedules import LinearSchedule
 # Does DQN require batch processing?
 
 
-from kollo import env
+from kollo import simulators
 
-s = env.Student()
+s = simulators.Student()
 student_history = [2*s.action_space] # Special character for "beginning of history"
 
 def model(inpt, num_actions, scope, reuse=False):

@@ -9,7 +9,7 @@ Clone and run setup:
 
     git clone https://github.com/AntonOsika/DL-kollo.git
     cd DL-kollo
-    pip install . --user
+    pip install . -e
 
 
 Import environment in python:

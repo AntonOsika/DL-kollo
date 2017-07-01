@@ -1,9 +1,9 @@
 import numpy as np
 
-from kollo import env
-Student = env.Student
+from kollo import simulators
+Student = simulators.Student
 
-Student = env.Student
+Student = simulators.Student
 
 s = Student()
 s2 = Student()
