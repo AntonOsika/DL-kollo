@@ -2,9 +2,6 @@ import numpy as np
 
 import keras
 
-from rl.agents.cem import CEMAgent
-from rl.memory import EpisodeParameterMemory
-
 from kollo import simulators
 
 
@@ -13,34 +10,55 @@ np.set_printoptions(precision=2, suppress=True)
 
 se = simulators.StudentEnv()
 
+n_data = 2000
+data = []
 
-def model_fn():
+
+def models_fn():
     shared_lstm = keras.layers.LSTM(4)
-    shared_dense1 = keras.layers.Dense(4, activation='relu')
+    shared_dense1 = keras.layers.Dense(4, activation='sigmoid')
     shared_dense2 = keras.layers.Dense(1)
 
-    inp = keras.layers.Input([1, None, se.action_space, 3])
+    inp_train = keras.layers.Input([None, 3])
+
+
+    lstm_out_train = shared_lstm(inp_train)
+    dense_out1_train = shared_dense1(lstm_out_train)
+    out_train = shared_dense2(dense_out1_train)
+
+
+
+    inp_test = keras.layers.Input([None, se.action_space, 3])
 
     # take out the first (from multiple states) and each action ()
-    inputs = [ keras.layers.Lambda(lambda x: x[:, 0, :, i, :])(inp) for i in range(se.action_space) ]
+    inputs_test = [ keras.layers.Lambda(lambda x: x[:, :, i, :])(inp_test) for i in range(se.action_space) ]
 
-    lstm_out = [shared_lstm(x) for x in inputs]
-    dense_out1 = [shared_dense1(x) for x in lstm_out]
-    dense_out2 = [shared_dense2(x) for x in dense_out1]
+    lstm_out_test = [shared_lstm(x) for x in inputs_test]
+    dense_out1_test = [shared_dense1(x) for x in lstm_out_test]
+    dense_out2_test = [shared_dense2(x) for x in dense_out1_test]
 
-    out = keras.layers.Concatenate()(dense_out2)
-
-    return keras.models.Model(inp, out)
+    out_test = keras.layers.Concatenate()(dense_out2_test)
 
 
 
-model = model_fn()
+    return keras.models.Model(inp_train, out_train), keras.models.Model(inp_test, out_test),
+
+
+
+
+train_model, test_model = models_fn()
 
 # print(model.summary())
 
 
 
-memory = EpisodeParameterMemory(limit=1000, window_length=1)
+for _ in range(n_data):
+    corrects = []
+    done = False
+    while not done:
+        obs, reward, done = se.do_exercise(np.random.randint(0, se.num_skills))
+
+
 
 cem = CEMAgent(model=model, nb_actions=se.action_space, memory=memory,
                batch_size=50, nb_steps_warmup=2000, train_interval=50, elite_frac=0.05)
