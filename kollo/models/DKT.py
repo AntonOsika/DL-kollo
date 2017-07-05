@@ -5,6 +5,7 @@ import tensorflow as tf
 import keras
 import keras.backend as K
 from keras.layers.wrappers import TimeDistributed
+from keras.preprocessing.sequence import pad_sequences
 
 from kollo import simulators
 
@@ -42,13 +43,15 @@ def models_fn():
 
     out_train = keras.layers.Lambda(concatenate_list)(out_train_list)
 
+    out_train = keras.layers.Activation('sigmoid')(out_train) #FIXME
 
     m_train = keras.models.Model(inp_train, out_train)
 
     def loss(y, y_pred):
-        return K.mean(K.binary_crossentropy(y, y_pred, from_logits=True), axis=-1)
+        # return K.mean(K.binary_crossentropy(y, y_pred, from_logits=True), axis=-1) #TODO: test using a sigmoid here
+        return K.mean(K.binary_crossentropy(y, y_pred), axis=-1) #TODO: test using a sigmoid here
 
-    m_train.compile(loss=loss, optimizer='adam')
+    m_train.compile(loss=loss, optimizer='sgd')
 
 
     inp_test = keras.layers.Input([None, se.action_space, 3])
@@ -82,16 +85,17 @@ def default_dkt(last_embed_dim=200, n_units=4, dropout_input=0.0, dropout_recurr
     # basis = np.concatenate((np.zeros((n_categories+1, 1)), np.eye(n_categories+1)), axis=1).T
 
     inp = keras.models.Input((None, se.action_space, 3))
-    inp_reshaped = keras.layers.Reshape([-1, se.action_space*3])
+    inp_reshaped = keras.layers.Reshape([-1, se.action_space*3])(inp)
 
     # last_embedding = keras.layers.Embedding( 2*n_categories+2, last_embed_dim, mask_zero=True)(inputs[0])
 
-    lstm_output = keras.layers.recurrent.LSTM( n_units, return_sequences=True, recurrent_dropout=dropout_recurrent, dropout=dropout_input )(inp)
+    lstm_output = keras.layers.recurrent.LSTM( n_units, return_sequences=True, recurrent_dropout=dropout_recurrent, dropout=dropout_input )(inp_reshaped)
 
     # dot product of next_embedding with LSTM output to get probability. Might be faster with dense layers to categorical crossentropy loss
-    next_indices = keras.layers.Lambda(lambda x: x[:, 1:])(inp)
+    one_hot_next = keras.layers.Lambda(lambda x: x[:, 1:, :, 0])(inp) # FIXME time increase timesteps are also considered in loss function
 
-    next_embedding = keras.layers.Embedding( se.action_space, n_units, mask_zero=False)()
+    # next_embedding = keras.layers.Embedding( se.action_space, n_units, mask_zero=False)()
+    next_embedding = TimeDistributed(keras.layers.Dense( n_units ))(one_hot_next)
 
 
     # TODO: Add 1 dim embedding for difficulty of skill. Use dropout on this to create "artificial" data
@@ -99,7 +103,7 @@ def default_dkt(last_embed_dim=200, n_units=4, dropout_input=0.0, dropout_recurr
     #p_hat = keras.layers.dot( [lstm_output, next_embedding], axes=[2, 2] )
     lstm_output_dropout = keras.layers.Dropout(dropout_readout)(lstm_output)
 
-    logit = keras.layers.Lambda( lambda x: K.sum(x[0]*x[1], axis=2) ) ([lstm_output_dropout, inp])
+    logit = keras.layers.Lambda( lambda x: K.sum(x[0][:, :1]*x[1], axis=2) ) ([lstm_output_dropout, next_embedding])
 
     p_hat = keras.layers.Activation(activation='sigmoid')(logit)
 
@@ -113,7 +117,7 @@ def default_dkt(last_embed_dim=200, n_units=4, dropout_input=0.0, dropout_recurr
 # print(model.summary())
 
 
-n_data = 200
+n_data = 20
 train_data = []
 
 
@@ -128,27 +132,56 @@ for _ in range(n_data):
 def data_generator():
     i = 0
     while True:
-        yield [ train_data[i%len(train_data)][np.newaxis, :, :, :], train_data[i%len(train_data)][np.newaxis, :-1, :, 1:2] ]
+        yield [ train_data[i%len(train_data)][np.newaxis, :, :, :], train_data[i%len(train_data)][np.newaxis, 1:, :, 1:2] ]
         i += 1
 
-X = [ d[np.newaxis] for d in train_data ]
 
-Y = [ d[np.newaxis, :-1, :, 1:2] for d in train_data ]
+if True:
 
-train_model, test_model = models_fn()
+    X = pad_sequences(train_data)
 
-# history = train_model.fit_generator(data_generator(), steps_per_epoch=n_data, epochs=1)
-history = train_model.fit(np.array(X), np.array(Y), epochs=1)
+    Y = X[:, 1:, :, 1:2]
 
 
-done = False
-while not done:
-    obs, reward, done, _ = se.step(np.random.randint(0, se.num_skills))
-    # print(test_model.predict(obs[np.newaxis]))
-    # print(train_model.predict(obs[np.newaxis]))
+    train_model, test_model = models_fn()
 
-avg_corr = np.sum(obs[:, :, 0]*obs[:, :, 1])/np.sum(obs[:, :, 0])
+    # history = train_model.fit_generator(data_generator(), steps_per_epoch=n_data, epochs=1)
+    history = train_model.fit((X), (Y), epochs=10, batch_size=32)
 
-avg_corr_pred = np.sum(test_model.predict(obs[np.newaxis])*obs[np.newaxis, :, :, 0:1])/np.sum(obs[:, :, 0])
 
-print("Reward: {} Average corr: {} Pred corr: {} ".format(reward, avg_corr, avg_corr_pred) )
+    done = False
+    while not done:
+        obs, reward, done, _ = se.step(np.random.randint(0, se.num_skills))
+        # print(test_model.predict(obs[np.newaxis]))
+        # print(train_model.predict(obs[np.newaxis]))
+
+    avg_corr = np.sum(obs[:, :, 0]*obs[:, :, 1])/np.sum(obs[:, :, 0])
+
+    avg_corr_pred = np.sum(test_model.predict(obs[np.newaxis])*obs[np.newaxis, :, :, 0:1])/np.sum(obs[:, :, 0])
+
+    print("Reward: {} Average corr: {} Pred corr: {} ".format(reward, avg_corr, avg_corr_pred) )
+
+else:
+
+    X = pad_sequences(train_data)
+
+    indices = X[:, 1:, :, 0].nonzero() # all places where question nonzero
+
+    Y = X[indices[:-1], 1]
+
+
+    train_model = default_dkt()
+
+    # history = train_model.fit_generator(data_generator(), steps_per_epoch=n_data, epochs=1)
+    history = train_model.fit(X, Y, epochs=10, batch_size=32)
+
+
+    done = False
+    while not done:
+        obs, reward, done, _ = se.step(np.random.randint(0, se.num_skills))
+        # print(test_model.predict(obs[np.newaxis]))
+        # print(train_model.predict(obs[np.newaxis]))
+
+
+
+    print("Done")
